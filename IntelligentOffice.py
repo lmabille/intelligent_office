@@ -21,7 +21,6 @@ class IntelligentOffice:
     LUX_MIN = 500
     LUX_MAX = 550
 
-    blinds_open = ''
 
     def __init__(self):
         """
@@ -98,6 +97,22 @@ class IntelligentOffice:
         elif self.blinds_open != 'CLOSED':
             self.close_blinds()
 
+    def turn_light_on(self) -> None:
+        """
+        Turns on the smart lightbulb
+        """
+        GPIO.output(self.LED_PIN, True)
+        self.light_on = True
+
+
+    def turn_light_off(self) -> None:
+        """
+        Turns off the smart lightbulb
+        """
+        GPIO.output(self.LED_PIN, False)
+        self.light_on = False
+
+
 
     def manage_light_level(self) -> None:
         """
@@ -110,7 +125,12 @@ class IntelligentOffice:
         stops regulating the light level in the office and then turns off the smart light bulb. 
         When the first worker goes back into the office, the system resumes regulating the light level
         """
-        pass
+
+        if GPIO.input(self.PHOTO_PIN) < self.LUX_MIN:
+            self.turn_light_on()
+        elif GPIO.input(self.PHOTO_PIN) > self.LUX_MAX:
+            self.turn_light_off()
+
 
     def monitor_air_quality(self) -> None:
         """

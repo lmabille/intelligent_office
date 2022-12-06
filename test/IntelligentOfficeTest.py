@@ -42,3 +42,16 @@ class IntelligentOfficeTest(unittest.TestCase):
         self.intelOff.manage_blinds_based_on_time()
         self.assertEqual(self.intelOff.blinds_open, 'CLOSED')
 
+    @patch.object(GPIO, 'input')
+    def test_ligh_on(self, mock_input):
+        mock_input.return_value = 490
+        self.intelOff.manage_light_level()
+        self.assertTrue(self.intelOff.light_on)
+
+    @patch.object(GPIO, 'input')
+    def test_ligh_on(self, mock_input):
+        mock_input.return_value = 560
+        self.intelOff.manage_light_level()
+        self.assertFalse(self.intelOff.light_on)
+
+
