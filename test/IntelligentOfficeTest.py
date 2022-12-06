@@ -28,7 +28,7 @@ class IntelligentOfficeTest(unittest.TestCase):
 
     @patch.object(RTC, 'get_current_day')
     @patch.object(RTC, 'get_current_time_string')
-    def test_open_garage_door(self, mock_rtc_time, mock_rtc_day):
+    def test_open_window(self, mock_rtc_time, mock_rtc_day):
         mock_rtc_time.return_value = '11:20:28'
         mock_rtc_day.return_value = 'MONDAY'
         self.intelOff.manage_blinds_based_on_time()
@@ -49,9 +49,29 @@ class IntelligentOfficeTest(unittest.TestCase):
         self.assertTrue(self.intelOff.light_on)
 
     @patch.object(GPIO, 'input')
-    def test_ligh_on(self, mock_input):
+    def test_light_on(self, mock_input):
         mock_input.return_value = 560
         self.intelOff.manage_light_level()
         self.assertFalse(self.intelOff.light_on)
+
+
+    @patch.object(GPIO, 'input')
+    def test_light_on(self, mock_input):
+        mock_input.side_effect = [490, 12, 0, 25, 45]
+        self.intelOff.manage_light_level()
+        self.assertTrue(self.intelOff.light_on)
+
+    @patch.object(GPIO, 'input')
+    def test_fan_on(self, mock_input):
+        mock_input.return_value = 850
+        self.intelOff.monitor_air_quality()
+        self.assertTrue(self.intelOff.fan_switch_on)
+
+    @patch.object(GPIO, 'input')
+    def test_fan_off(self, mock_input):
+        mock_input.return_value = 450
+        self.intelOff.monitor_air_quality()
+        self.assertFalse(self.intelOff.fan_switch_on)
+
 
 

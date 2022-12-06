@@ -21,6 +21,11 @@ class IntelligentOffice:
     LUX_MIN = 500
     LUX_MAX = 550
 
+    CO2_MIN = 500
+    CO2_MAX = 800
+
+    PUD_OFF = 20
+    PUD_UP = 22
 
     def __init__(self):
         """
@@ -64,7 +69,7 @@ class IntelligentOffice:
 
     def open_blinds(self) -> None:
         """
-        Opens the garage door using the servo motor
+        Opens the window using the servo motor
         A motor angle of 180 degrees corresponds to a fully open door
         """
         duty_cycle = (180 / 18) + 2
@@ -73,7 +78,7 @@ class IntelligentOffice:
 
     def close_blinds(self) -> None:
         """
-        Closes the garage door using the servo motor
+        Closes the window door using the servo motor
         A motor angle of 0 degrees corresponds to a fully closed door
         """
         duty_cycle = (0 / 180) + 2
@@ -112,7 +117,23 @@ class IntelligentOffice:
         GPIO.output(self.LED_PIN, False)
         self.light_on = False
 
+    def manage_based_on_photoresistor(self) -> None:
+        if GPIO.input(self.PHOTO_PIN) < self.LUX_MIN:
+            self.turn_light_on()
+        elif GPIO.input(self.PHOTO_PIN) > self.LUX_MAX:
+            self.turn_light_off()
 
+    def get_occupied_quadrants(self) -> int:
+        """
+        Calculates the number of occupied quadrants in the office.
+        :return: The number of occupied quadrants.
+        """
+        occupied_cadrants = 0
+        for pin in [self.INFRARED_PIN_1, self.INFRARED_PIN_2, self.INFRARED_PIN_3, self.INFRARED_PIN_4]:
+            if self.check_quadrant_occupancy(pin):
+                occupied_cadrants += 1
+
+        return occupied_cadrants
 
     def manage_light_level(self) -> None:
         """
@@ -126,10 +147,29 @@ class IntelligentOffice:
         When the first worker goes back into the office, the system resumes regulating the light level
         """
 
-        if GPIO.input(self.PHOTO_PIN) < self.LUX_MIN:
-            self.turn_light_on()
-        elif GPIO.input(self.PHOTO_PIN) > self.LUX_MAX:
+        if self.get_occupied_quadrants() == 0:
+            GPIO.setup(self.PHOTO_PIN, GPIO.IN, pull_up_down=self.PUD_OFF)
             self.turn_light_off()
+        else:
+            GPIO.setup(self.PHOTO_PIN, GPIO.IN, 490, self.PUD_UP)
+            self.manage_based_on_photoresistor()
+
+
+
+    def turn_fan_on(self) -> None:
+        """
+        Turns on the exhaust fan
+        """
+        GPIO.output(self.FAN_PIN, True)
+        self.fan_switch_on = True
+
+
+    def turn_fan_off(self) -> None:
+        """
+        Turns off the exhaust fan
+        """
+        GPIO.output(self.FAN_PIN, False)
+        self.fan_switch_on = False
 
 
     def monitor_air_quality(self) -> None:
@@ -138,7 +178,10 @@ class IntelligentOffice:
         If the amount of detected CO2 is greater than or equal to 800 PPM, the system turns on the
         switch of the exhaust fan until the amount of CO2 is lower than 500 PPM.
         """
-        pass
+        if GPIO.input(self.CO2_PIN) < self.CO2_MIN:
+            self.turn_fan_off()
+        elif GPIO.input(self.CO2_PIN) > self.CO2_MAX:
+            self.turn_fan_on()
 
     def change_servo_angle(self, duty_cycle: float) -> None:
         """
