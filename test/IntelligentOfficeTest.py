@@ -26,3 +26,19 @@ class IntelligentOfficeTest(unittest.TestCase):
     def test_occupancy_invalid_pin(self):
         self.assertRaises(IntelligentOfficeError, self.intelOff.check_quadrant_occupancy, -1)
 
+    @patch.object(RTC, 'get_current_day')
+    @patch.object(RTC, 'get_current_time_string')
+    def test_open_garage_door(self, mock_rtc_time, mock_rtc_day):
+        mock_rtc_time.return_value = '11:20:28'
+        mock_rtc_day.return_value = 'MONDAY'
+        self.intelOff.manage_blinds_based_on_time()
+        self.assertEqual(self.intelOff.blinds_open, 'OPENED')
+
+    @patch.object(RTC, 'get_current_day')
+    @patch.object(RTC, 'get_current_time_string')
+    def test_closed_garage_door(self, mock_rtc_time, mock_rtc_day):
+        mock_rtc_time.return_value = '11:20:28'
+        mock_rtc_day.return_value = 'SUNDAY'
+        self.intelOff.manage_blinds_based_on_time()
+        self.assertEqual(self.intelOff.blinds_open, 'CLOSED')
+
